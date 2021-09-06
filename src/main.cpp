@@ -13,21 +13,40 @@ WGPUBuffer uRotBuf; // uniform buffer (containing the rotation angle)
 WGPUBindGroup bindGroup;
 
 #include <cmath>
-#include<vector>
+#include <vector>
+#include <iostream>
+using namespace std;
+//#TODO: Uncomment this block when you have implementation for Vec3
+/*
 #include "ray_tracing/Vec3.h"
-#include "ray_tracing/OrthographicCamera.h"
-#include "ray_tracing/PerspectiveCamera.h"
 #include "ray_tracing/Light.h"
 #include "ray_tracing/Color.h"
+#include "ray_tracing/Ray.h
+*/
+
+//#TODO: Uncomment this block when you have implementation for both types of camera
+/*
+#include "ray_tracing/OrthographicCamera.h"
+#include "ray_tracing/PerspectiveCamera.h"
+*/
+
+//#TODO: Uncomment this block when you have implementation for geometric objects
+/*
 #include "ray_tracing/Sphere.h"
 #include "ray_tracing/Plane.h"
 #include "ray_tracing/Ellipsoid.h"
+*/
 
-const int viewWidth = 640, viewHeight = 480;
-const double viewLeft = -2.0f, viewRight = 2.0f, viewBottom = -1.5f, viewTop = 1.5f;
+//#TODO: Uncomment this block when you have implementation for Vec3
+/*
 Vec3 viewPos(0.0f, 0.0f, -1.0f);
 Vec3 viewDir(0.0f, 0.0f, 1.0f);
 Vec3 viewUp(0.0f, 1.0f, 0.0f);
+*/
+
+
+const int viewWidth = 640, viewHeight = 480;
+const double viewLeft = -2.0f, viewRight = 2.0f, viewBottom = -1.5f, viewTop = 1.5f;
 
 WGPUTexture tex;
 WGPUSampler samplerTex;
@@ -408,46 +427,29 @@ static bool redraw() {
 	return true;
 }
 
-
+// #TODO: Uncomment this block and implement raytracer with perspective camera 
+// when you have implemtation of camera, geometric object
+/*
 void rayTracingPerspective(PerspectiveCamera camera, vector<Light*> lights, double ka, double kd, double ks, double Phongexponent, vector<GeometricObject*> gObjects, unsigned char* data)
 {
-	// #TODO: Implement raytracer with perspective camera
-	
-	//-- Just for testing, comment it when you implement your ray tracer
-	int idx = 0;
-	for (int i = 0; i < viewWidth; i++)
-		for (int j = 0; j < viewHeight; j++)
-		{
-			idx = ((j * viewWidth) + i) * 4;
-			data[idx] = floor(0.0f * 255);
-			data[idx + 1] = floor(0.5f * 255);
-			data[idx + 2] = floor(1.0f * 255);
-			data[idx + 3] = 255;
-		}
-	//-- end of test --------------------------------------------------
-	
-}
 
+
+}
+*/
+
+// #TODO: Uncomment and implement raytracer with perspective camera 
+// when you have implemtation of camera, geometric object
+/*
 void rayTracingOrthographic(OrthographicCamera cam, vector<Light*> lights, double ka, double kd, double ks, double Phongexponent, vector<GeometricObject*> gObject, unsigned char* data)
 {
-	// #TODO: Implement raytracer with orthographic camera
 
-	//-- Just for testing, comment it when you implement your ray tracer
-	int idx = 0;
-	for (int i = 0; i < viewWidth; i++)
-		for (int j = 0; j < viewHeight; j++)
-		{
-			idx = ((j * viewWidth) + i) * 4;
-			data[idx] = floor(0.0f * 255);
-			data[idx + 1] = floor(0.5f * 255);
-			data[idx + 2] = floor(1.0f * 255);
-			data[idx + 3] = 255;
-		}
-	//-- end of test --------------------------------------------------
 }
+*/
 
 extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 
+	//#TODO: Uncomment this block when you have implementation for both types of camera
+	/*
 	OrthographicCamera orthoCam(viewPos, viewDir, viewUp);
 	orthoCam.setCameraFrame();
 	cout << orthoCam;
@@ -455,39 +457,43 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 	PerspectiveCamera perspectiveCam(viewPos, viewDir, viewUp);
 	perspectiveCam.setCameraFrame();
 	cout << perspectiveCam;
+	*/
 
 	
 	//----------- Light ------------------
+	//#TODO: Uncomment this block when you have implementation for Vec3
+	/* 
 	double ka = 0.3, kd = 0.7, ks = 0.4, Phongexponent = 32;
 	vector<Light*> lights;
 	Light light1(Vec3(0.0f, 0.0f, 5.0f), Color(1.0f));
 	lights.push_back(&light1);
 	Light light2(Vec3(5.0f, 0.0f, 5.0f), Color(1.0f));
 	lights.push_back(&light2);
+	*/
 
 	//----------- Result image ------------------
 	unsigned char* data = new unsigned char[viewWidth * viewHeight * 4];
 	
 	//------------ Object ----------------
+	//#TODO: Uncomment this block when you have implementation for geometric objects
+	/* 
 	vector<GeometricObject*> gObjects;
-	
 	Sphere sphere1(Vec3(0.0f, 0.0f, 5.0f), 1.5f, Color(1.0f, 0.0f, 0.0f));
 	Plane plane1(0.0f, 1.0f, 0.0f, 4.0f, Color(0.5f, 0.5f, 0.5f));
 	Ellipsoid ellipsoid1(Vec3(-5.0f, 0.0f, 5.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
-	/*Cone cone1(Vec3(3.0f, 0.0f, 5.0f), 0.5f, 1.5f, Color(0.0f, 0.0f, 1.0f));
-    Cylinder cylinder1(Vec3(5.0f, 0.0f, 5.0f), 0.5f, 0.5f, 1.5f, Color(1.0f, 0.0f, 1.0f));*/
-	
+
 	gObjects.push_back(&plane1);
 	gObjects.push_back(&sphere1);
 	gObjects.push_back(&ellipsoid1);
-    /*gObjects.push_back(&cone1);
-    gObjects.push_back(&cylinder1);*/
 
+	*/
+ 
 
 	//------------ Ray tracing ----------------
-	
+	// #TODO: Uncomment this block when you have implementation for ray tracing
+	/*
 	char projMethod;
-
+	
 	do {
 		cout << "Choose the projection method (O/P): (O = orthographic), (P = perspective):";
 		cin >> projMethod;	
@@ -498,7 +504,21 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 		rayTracingPerspective(perspectiveCam, lights, ka, kd, ks, Phongexponent, gObjects, data);
 	else if (projMethod == 'O' || projMethod == 'o')
 		rayTracingOrthographic(orthoCam, lights, ka, kd, ks, Phongexponent, gObjects, data);
+	*/
 	
+	//#TODO: This block is used for testing, comment it when you finish all implementations
+	int idx = 0;
+	for (int i = 0; i < viewWidth; i++)
+		for (int j = 0; j < viewHeight; j++)
+		{
+			idx = ((j * viewWidth) + i) * 4;
+			data[idx] = floor(0.0f * 255);
+			data[idx + 1] = floor(0.5f * 255);
+			data[idx + 2] = floor(1.0f * 255);
+			data[idx + 3] = 255;
+		}
+	// end of testing block
+
 	if (window::Handle wHnd = window::create(viewWidth, viewHeight, "Hello CS248")) {
 		if ((device = webgpu::create(wHnd))) {
 			queue = wgpuDeviceGetQueue(device);
