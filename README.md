@@ -22,7 +22,8 @@
 
     - Install Google Chrome Canary:
         https://www.google.com/chrome/canary/.
-        * After the installation is finished, please enable the flag: --enable-unsafe-webgpu: type chrome://flags/ in the tab bar, then enable Unsafe WebGPU flag.
+        * After the installation is finished, please enable the flag: --enable-unsafe-webgpu
+            - Type chrome://flags/ in the tab bar, then enable Unsafe WebGPU flag.
 
 2. Build source code:
     - Native build:
