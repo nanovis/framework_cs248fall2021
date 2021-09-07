@@ -39,8 +39,8 @@ using namespace std;
 
 //#TODO: Uncomment this block when you have implementation for Vec3
 /*
-Vec3 viewPos(0.0f, 0.0f, -1.0f);
-Vec3 viewDir(0.0f, 0.0f, 1.0f);
+Vec3 viewPos(0.0f, 0.0f, 1.0f);
+Vec3 viewDir(0.0f, 0.0f, -1.0f);
 Vec3 viewUp(0.0f, 1.0f, 0.0f);
 */
 
@@ -458,11 +458,11 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 	//----------- Light ------------------
 	//#TODO: Uncomment this block when you have implementation for Vec3
 	/* 
-	double ka = 0.3, kd = 0.7, ks = 0.4, Phongexponent = 32;
+	double ka = 0.2, kd = 0.6, ks = 0.2, Phongexponent = 32;
 	vector<Light*> lights;
-	Light light1(Vec3(0.0f, 0.0f, 5.0f), Color(1.0f));
+	Light light1(Vec3(0.0f, 5.0f, 0.0f), Color(1.0f));
 	lights.push_back(&light1);
-	Light light2(Vec3(5.0f, 0.0f, 5.0f), Color(1.0f));
+	Light light2(Vec3(5.0f, 5.0f, 0.0f), Color(1.0f));
 	lights.push_back(&light2);
 	*/
 
@@ -473,9 +473,9 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 	//#TODO: Uncomment this block when you have implementation for geometric objects
 	/* 
 	vector<GeometricObject*> gObjects;
-	Sphere sphere1(Vec3(0.0f, 0.0f, 5.0f), 1.5f, Color(1.0f, 0.0f, 0.0f));
+	Sphere sphere1(Vec3(0.0f, 0.0f, -1.0f), 0.5f, Color(1.0f, 0.0f, 0.0f));
 	Plane plane1(0.0f, 1.0f, 0.0f, 1.4f, Color(0.5f, 0.5f, 0.5f));
-	Ellipsoid ellipsoid1(Vec3(-5.0f, 0.0f, 5.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
+	Ellipsoid ellipsoid1(Vec3(3.0f, 0.0f, -2.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
 
 	gObjects.push_back(&plane1);
 	gObjects.push_back(&sphere1);
