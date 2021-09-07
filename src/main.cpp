@@ -475,7 +475,9 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 	vector<GeometricObject*> gObjects;
 	Sphere sphere1(Vec3(0.0f, 0.0f, -1.0f), 0.5f, Color(1.0f, 0.0f, 0.0f));
 	Plane plane1(0.0f, 1.0f, 0.0f, 1.4f, Color(0.5f, 0.5f, 0.5f));
-	Ellipsoid ellipsoid1(Vec3(3.0f, 0.0f, -2.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
+	Ellipsoid ellipsoid1(Vec3(3.25f, 0.0f, -2.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
+	Cone cone1(Vec3(0.25f, 0.1f, -0.25f), 0.25f, 0.5f, Color(0.0f, 0.0f, 1.0f));
+	Cylinder cylinder1(Vec3(-0.5f, 0.0f, 0.0f), 0.25f, 0.5f, Color(1.0f, 0.0f, 1.0f));
 
 	gObjects.push_back(&plane1);
 	gObjects.push_back(&sphere1);

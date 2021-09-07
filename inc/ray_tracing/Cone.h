@@ -3,25 +3,28 @@
 #include "Color.h"
 #include "Ray.h"
 #include "GeometricObject.h"
+#include "Plane.h"
 #include<cmath>
 #include<iostream>
 
 using namespace std;
 	
-class Ellipsoid : public GeometricObject {
+class Cone : public GeometricObject {
 public:
-	double aRadius; // radius along x axis
-	double bRadius; // radius along y axis
-	double cRadius; // radius along z axis
-	Vec3 center; // center of ellipsoid
+	double radius;
+	double height;
+	Vec3 apex; // tip or vertex or apex of cone
 
 	// #TODO: You can declare some additional variables for computation in here
-	
-	Ellipsoid(Vec3 _center, double _aRadius, double _bRadius, double _cRadius, Color _color) : GeometricObject(_color), center(_center), aRadius(_aRadius), bRadius(_bRadius), cRadius(_cRadius) {}
-	
+
+	Cone(Vec3 _apex, double _radius, double _height, Color _color) : GeometricObject(_color), apex(_apex), radius(_radius), height(_height)
+	{
+		
+	}
+
 	double testIntersection(Ray ray)
 	{
-		// #TODO: Implement function to check ray intersects with ellipsoid or not, return t
+		// #TODO: Implement function to check ray intersects with cone or not, return t
 	}
 
 	Vec3 computeIntersectionPoint(Ray ray, double t)
@@ -33,6 +36,5 @@ public:
 	{
 		// #TODO: Implement function to find normal vector at intesection point, return normal vector
 	}
-	
 };
 
