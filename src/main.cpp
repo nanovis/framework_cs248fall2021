@@ -53,7 +53,6 @@ WGPUSampler samplerTex;
 WGPUTextureView texView;
 
 
-// ngan.nguyen: end
 /**
  * Current rotation angle (in degrees, updated per frame).
  */
@@ -145,7 +144,6 @@ static WGPUBuffer createBuffer(const void* data, size_t size, WGPUBufferUsage us
 	return buffer;
 }
 
-// ngan.nguyen: add for texture
 static WGPUTexture createTexture(unsigned char* data, unsigned int w, unsigned int h) {
 	
 	WGPUExtent3D texSize = {};
@@ -172,7 +170,6 @@ static WGPUTexture createTexture(unsigned char* data, unsigned int w, unsigned i
 	wgpuQueueWriteTexture(queue, &texCopy, data, w * h * 4, &texDataLayout, &texSize);
 	return texCopy.texture;
 }
-// ngan.nguyen
 
 /**
  * Bare minimum pipeline to draw a triangle using the above shaders.
@@ -194,7 +191,6 @@ static void createPipelineAndBuffers(unsigned char* data, unsigned int w, unsign
 	bglEntry.sampler = { 0 };
 
 	//===================================================================
-	//ngan.nguyen: add for texture
 
 	tex = createTexture(data, w, h);
 
@@ -241,7 +237,6 @@ static void createPipelineAndBuffers(unsigned char* data, unsigned int w, unsign
 	allBgLayoutEntries[1] = bglTexEntry;
 	allBgLayoutEntries[2] = bglSamplerEntry;
 
-	//ngan.nguyen: end
 	//=======================================================================
 
 	WGPUBindGroupLayoutDescriptor bglDesc = {};
@@ -479,7 +474,7 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 	/* 
 	vector<GeometricObject*> gObjects;
 	Sphere sphere1(Vec3(0.0f, 0.0f, 5.0f), 1.5f, Color(1.0f, 0.0f, 0.0f));
-	Plane plane1(0.0f, 1.0f, 0.0f, 4.0f, Color(0.5f, 0.5f, 0.5f));
+	Plane plane1(0.0f, 1.0f, 0.0f, 1.4f, Color(0.5f, 0.5f, 0.5f));
 	Ellipsoid ellipsoid1(Vec3(-5.0f, 0.0f, 5.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
 
 	gObjects.push_back(&plane1);
