@@ -286,3 +286,74 @@ void window::loop(window::Handle wHnd, window::Redraw func) {
 		func();
 	}
 }
+
+/**
+ * Converts mouse button constants from GLFW3 library into our library constants.
+ */
+int window::convertMouseButton(int button)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		return MOUSE_LEFT_BUTTON;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		return MOUSE_MIDDLE_BUTTON;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		return MOUSE_RIGHT_BUTTON;
+	}
+
+	return -1;
+}
+
+/**
+ * Converts mouse action constants from GLFW3 library into our library constants.
+ */
+int window::convertMouseAction(int action)
+{
+	if (action == GLFW_PRESS) {
+		return ACTION_PRESSED;
+	}
+	else if (action == GLFW_RELEASE) {
+		return ACTION_RELEASED;
+	}
+	else if (action == GLFW_REPEAT) {
+		return ACTION_REPEAT;
+	}
+
+	return -1;
+}
+
+/**
+ * Binds mouse click inside the GLFW3 window to the Renderer mouse click handler.
+ */
+void window::mouseClicked(MouseHandler func)
+{
+	mouseClickHandlerClb = func;
+
+	glfwSetMouseButtonCallback(_window, [](GLFWwindow* window, int button, int action, int mods) {
+		if (mouseClickHandlerClb != NULLPTR) {
+			double xpos, ypos;
+			//getting cursor position
+			glfwGetCursorPos(window, &xpos, &ypos);
+
+			mouseClickHandlerClb(convertMouseButton(button),
+				convertMouseAction(action),
+				(int)xpos,
+				(int)ypos);
+		}
+	});
+}
+
+/**
+ * Binds key press inside the GLFW3 window to the Renderer key press handler.
+ */
+void window::keyPressed(KeyHandler func)
+{
+	keyHandlerClb = func;
+
+	glfwSetKeyCallback(_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+		if (keyHandlerClb != NULLPTR) {
+			keyHandlerClb(key, convertMouseAction(action));
+		}
+	});
+}
