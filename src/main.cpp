@@ -1,6 +1,66 @@
 #include "webgpu.h"
-
 #include <string.h>
+#include <cmath>
+#include <vector>
+#include <iostream>
+using namespace std;
+
+#include "ray_tracing/Vec3.h"
+#include "ray_tracing/Matrix4.h"
+#include "ray_tracing/Light.h"
+#include "ray_tracing/Color.h"
+#include "ray_tracing/Ray.h"
+#include "ray_tracing/OrthographicCamera.h"
+#include "ray_tracing/PerspectiveCamera.h"
+#include "ray_tracing/Sphere.h"
+#include "ray_tracing/Plane.h"
+#include "ray_tracing/Ellipsoid.h"
+//#include "ray_tracing/Cone.h"
+//#include "ray_tracing/Cylinder.h"
+
+
+//---------- Camera -----------------------------------------------
+Vec3 viewPos(0.0f, 0.0f, 1.0f);
+Vec3 viewDir(0.0f, 0.0f, -1.0f);
+Vec3 viewUp(0.0f, 1.0f, 0.0f);
+OrthographicCamera orthoCam(viewPos, viewDir, viewUp);
+PerspectiveCamera perspectiveCam(viewPos, viewDir, viewUp);
+
+const int viewWidth = 640, viewHeight = 480;
+const double viewLeft = -2.0f, viewRight = 2.0f, viewBottom = -1.5f, viewTop = 1.5f;
+const double INF = std::numeric_limits<double>::infinity();
+
+//----------- Light ------------------------------------------------
+double ka = 0.2, kd = 0.6, ks = 0.2, Phongexponent = 250;
+vector<Light*> lights;
+Light light1(Vec3(0.0f, 5.0f, 0.0f), Color(1.0f));
+Light light2(Vec3(5.0f, 5.0f, 0.0f), Color(1.0f));
+
+
+//------------ Object ----------------------------------------------
+vector<GeometricObject*> gObjects;
+Sphere sphere1(Vec3(0.0f, 0.0f, -1.0f), 0.5f, Color(1.0f, 0.0f, 0.0f));
+Plane plane1(0.0f, 1.0f, 0.0f, 1.4f, Color(0.5f, 0.5f, 0.5f));
+Ellipsoid ellipsoid1(Vec3(3.25f, 0.0f, -2.0f), 1.0f, 1.0f, 1.0f, Color(0.0f, 1.0f, 0.0f));
+//Cone cone1(Vec3(0.25f, 0.1f, -0.25f), 0.25f, 0.5f, Color(0.0f, 0.0f, 1.0f));
+//Cylinder cylinder1(Vec3(0.0f, 0.5f, -0.1f), 0.25f, 0.5f, Color(1.0f, 0.0f, 1.0f));
+
+//----------- Projection method --------------------------------------
+char projMethod = 'P';
+void rayTracingPerspective(PerspectiveCamera, vector<Light*>, double, double, double, double, vector<GeometricObject*>, unsigned char*);
+void rayTracingOrthographic(OrthographicCamera, vector<Light*>, double, double, double, double, vector<GeometricObject*>, unsigned char*);
+
+//----------- Result image ---------------------------------------
+unsigned char* img = new unsigned char[viewWidth * viewHeight * 4];
+
+//----------- Function for update scene after transformation ---------
+void updateScene();
+
+//----------- Function for handling user interaction -----------------
+void mouseClickHandler(int, int, int, int);
+void keyPressHandler(int, int);
+
+//----------- WEBGPU variables ---------------------------------------
 
 WGPUDevice device;
 WGPUQueue queue;
@@ -12,45 +72,14 @@ WGPUBuffer indxBuf; // index buffer
 WGPUBuffer uRotBuf; // uniform buffer (containing the rotation angle)
 WGPUBindGroup bindGroup;
 
-#include <cmath>
-#include <vector>
-#include <iostream>
-using namespace std;
-//#TODO: Uncomment this block when you have implementation for Vec3
-/*
-#include "ray_tracing/Vec3.h"
-#include "ray_tracing/Light.h"
-#include "ray_tracing/Color.h"
-#include "ray_tracing/Ray.h
-*/
 
-//#TODO: Uncomment this block when you have implementation for both types of camera
-/*
-#include "ray_tracing/OrthographicCamera.h"
-#include "ray_tracing/PerspectiveCamera.h"
-*/
-
-//#TODO: Uncomment this block when you have implementation for geometric objects
-/*
-#include "ray_tracing/Sphere.h"
-#include "ray_tracing/Plane.h"
-#include "ray_tracing/Ellipsoid.h"
-*/
-
-//#TODO: Uncomment this block when you have implementation for Vec3
-/*
-Vec3 viewPos(0.0f, 0.0f, 1.0f);
-Vec3 viewDir(0.0f, 0.0f, -1.0f);
-Vec3 viewUp(0.0f, 1.0f, 0.0f);
-*/
-
-
-const int viewWidth = 640, viewHeight = 480;
-const double viewLeft = -2.0f, viewRight = 2.0f, viewBottom = -1.5f, viewTop = 1.5f;
-
-WGPUTexture tex;
+WGPUTexture tex; // Texture
 WGPUSampler samplerTex;
 WGPUTextureView texView;
+WGPUExtent3D texSize = {};
+WGPUTextureDescriptor texDesc = {};
+WGPUTextureDataLayout texDataLayout = {};
+WGPUImageCopyTexture texCopy = {};
 
 
 /**
@@ -144,14 +173,15 @@ static WGPUBuffer createBuffer(const void* data, size_t size, WGPUBufferUsage us
 	return buffer;
 }
 
+
 static WGPUTexture createTexture(unsigned char* data, unsigned int w, unsigned int h) {
-	
-	WGPUExtent3D texSize = {};
+
+
 	texSize.depthOrArrayLayers = 1;
 	texSize.height = h;
 	texSize.width = w;
 
-	WGPUTextureDescriptor texDesc = {};
+
 	texDesc.sampleCount = 1;
 	texDesc.mipLevelCount = 1;
 	texDesc.dimension = WGPUTextureDimension_2D;
@@ -159,14 +189,14 @@ static WGPUTexture createTexture(unsigned char* data, unsigned int w, unsigned i
 	texDesc.usage = WGPUTextureUsage_Sampled | WGPUTextureUsage_CopyDst;
 	texDesc.format = WGPUTextureFormat_RGBA8Unorm;
 
-	WGPUTextureDataLayout texDataLayout = {};
+
 	texDataLayout.offset = 0;
 	texDataLayout.bytesPerRow = 4 * w;
 	texDataLayout.rowsPerImage = h;
-	
-	WGPUImageCopyTexture texCopy = {};
+
+
 	texCopy.texture = wgpuDeviceCreateTexture(device, &texDesc);
-	 
+
 	wgpuQueueWriteTexture(queue, &texCopy, data, w * h * 4, &texDataLayout, &texSize);
 	return texCopy.texture;
 }
@@ -199,6 +229,7 @@ static void createPipelineAndBuffers(unsigned char* data, unsigned int w, unsign
 	texViewDesc.format = WGPUTextureFormat_RGBA8Unorm;
 
 	texView = wgpuTextureCreateView(tex, &texViewDesc);
+
 
 	WGPUSamplerDescriptor samplerDesc = {};
 	samplerDesc.addressModeU = WGPUAddressMode_ClampToEdge;
@@ -394,6 +425,11 @@ static bool redraw() {
 	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, nullptr);			// create encoder
 	WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPass);	// create pass
 
+	// update texture before draw
+	updateScene();
+	wgpuQueueWriteTexture(queue, &texCopy, img, viewWidth * viewHeight * 4, &texDataLayout, &texSize);
+	// end update texture
+
 	// update the rotation
 	/*rotDeg += 0.1f;
 	wgpuQueueWriteBuffer(queue, uRotBuf, 0, &rotDeg, sizeof(rotDeg));*/
@@ -422,108 +458,264 @@ static bool redraw() {
 	return true;
 }
 
-// #TODO: Uncomment this block and implement raytracer with perspective camera 
-// when you have implemtation of camera, geometric object
-/*
+// #TODO: Using these two functions for tasks in the assignment
+/**
+ * Mouse handling function.
+ */
+void mouseClickHandler(int button, int action, int x, int y)
+{
+	printf("button:%d action:%d x:%d y:%d\n", button, action, x, y);
+}
+
+/**
+ * Keyboard handling function.
+ */
+void keyPressHandler(int button, int action)
+{
+	printf("key:%d action:%d\n", button, action);
+}
+
+// #TODO: Using this function to update/draw scene after transformation
+void updateScene()
+{
+	if (projMethod == 'P' || projMethod == 'p')
+		rayTracingPerspective(perspectiveCam, lights, ka, kd, ks, Phongexponent, gObjects, img);
+	else if (projMethod == 'O' || projMethod == 'o')
+		rayTracingOrthographic(orthoCam, lights, ka, kd, ks, Phongexponent, gObjects, img);
+}
+
+// #TODO: You can change two functions below if needed
 void rayTracingPerspective(PerspectiveCamera camera, vector<Light*> lights, double ka, double kd, double ks, double Phongexponent, vector<GeometricObject*> gObjects, unsigned char* data)
 {
+	int idx = 0;
+	Ray viewRay;
+	for (int j = 0; j < viewHeight; j++) { // foreach pixel
+		for (int i = 0; i < viewWidth; i++) {
 
+			double ui = (double)viewLeft + (viewRight - viewLeft) * (i + 0.5f) / viewWidth;
+			double vj = (double)viewBottom + (viewTop - viewBottom) * (j + 0.5f) / viewHeight;
 
+			bool hit = false;
+			double t_near = INF;
+			int hitObjectIndex = -1;
+			Vec3 hitNorm;
+			Vec3 hitPoint;
+			Color finalColor;
+
+			camera.getRay(viewRay, ui, vj);
+
+			for (int k = 0; k < gObjects.size(); k++) {
+				double t = gObjects[k]->testIntersection(viewRay);
+				if (t > 0 && t < t_near) {
+					hit = true;
+					t_near = t;
+					hitObjectIndex = k;
+					hitPoint = gObjects[k]->computeIntersectionPoint(viewRay, t);
+					hitNorm = gObjects[k]->computeNormalIntersection(viewRay, t);
+				}
+			}
+
+			if (hit) {
+
+				Color diffuse = Color(0.0f, 0.0f, 0.0f);
+				Color specular = Color(0.0f, 0.0f, 0.0f);
+				Vec3 n = hitNorm.normalize();
+
+				for (int index = 0; index < lights.size(); index++)
+				{
+					Vec3 l = (lights[index]->position - hitPoint).normalize();
+					bool isShadow = false;
+					double epsilon = 1e-6;
+
+					Ray shadowRay(hitPoint, l);
+
+					for (int k = 0; k < gObjects.size(); k++) {
+						if (gObjects[k]->testIntersection(shadowRay) > epsilon)
+						{
+							isShadow = true;
+							break;
+						}
+					}
+
+					if (!isShadow)
+					{
+						diffuse = diffuse + (lights[index]->intensity * kd * (max(0.0, (n.dotProduct(l)))));
+						Vec3 v = viewPos - hitPoint;
+						Vec3 h = (v + l).normalize();
+						specular = specular + (lights[index]->intensity * ks * pow(max(0.0, (n.dotProduct(h))), Phongexponent));
+
+					}
+
+				}
+				// FinalColor
+				Color ambient = gObjects[hitObjectIndex]->color * ka;
+				finalColor = ambient + diffuse + specular;
+
+				// Clamp color if the color calculated from many lights bigger than 1.
+				if (finalColor.red > 1.0 || finalColor.blue > 1.0 || finalColor.green > 1.0)
+				{
+
+					if (finalColor.red > 1.0)
+						finalColor.red = 1.0;
+
+					if (finalColor.blue > 1.0)
+						finalColor.blue = 1.0;
+
+					if (finalColor.green > 1.0)
+						finalColor.green = 1.0;
+				}
+
+			}
+
+			else {
+				Color backgroundColor(0.0f, 0.0f, 0.0f);
+				finalColor = backgroundColor;
+			}
+
+			idx = ((j * viewWidth) + i) * 4;
+			data[idx] = floor(finalColor.red * 255);
+			data[idx + 1] = floor(finalColor.green * 255);
+			data[idx + 2] = floor(finalColor.blue * 255);
+			data[idx + 3] = 255;
+		}
+	}
 }
-*/
 
-// #TODO: Uncomment and implement raytracer with perspective camera 
-// when you have implemtation of camera, geometric object
-/*
-void rayTracingOrthographic(OrthographicCamera cam, vector<Light*> lights, double ka, double kd, double ks, double Phongexponent, vector<GeometricObject*> gObject, unsigned char* data)
+void rayTracingOrthographic(OrthographicCamera camera, vector<Light*> lights, double ka, double kd, double ks, double Phongexponent, vector<GeometricObject*> gObjects, unsigned char* data)
 {
+	int idx = 0;
+	Ray viewRay;
+	for (int j = 0; j < viewHeight; j++) { // foreach pixel
+		for (int i = 0; i < viewWidth; i++) {
 
+			double ui = (double)viewLeft + (viewRight - viewLeft) * (i + 0.5f) / viewWidth;
+			double vj = (double)viewBottom + (viewTop - viewBottom) * (j + 0.5f) / viewHeight;
+
+			bool hit = false;
+			double t_near = INF;
+			int hitObjectIndex = -1;
+			Vec3 hitNorm;
+			Vec3 hitPoint;
+			Color finalColor;
+
+			camera.getRay(viewRay, ui, vj);
+
+			for (int k = 0; k < gObjects.size(); k++) {
+				double t = gObjects[k]->testIntersection(viewRay);
+				if (t > 0 && t < t_near) {
+					hit = true;
+					t_near = t;
+					hitObjectIndex = k;
+					hitPoint = gObjects[k]->computeIntersectionPoint(viewRay, t);
+					hitNorm = gObjects[k]->computeNormalIntersection(viewRay, t);
+				}
+			}
+
+			if (hit) {
+
+				Color diffuse = Color(0.0f, 0.0f, 0.0f);
+				Color specular = Color(0.0f, 0.0f, 0.0f);
+				Vec3 n = hitNorm.normalize();
+
+				for (int index = 0; index < lights.size(); index++)
+				{
+					Vec3 l = (lights[index]->position - hitPoint).normalize();
+					bool isShadow = false;
+					double epsilon = 1e-6;
+
+					Ray shadowRay(hitPoint, l);
+					for (int k = 0; k < gObjects.size(); k++) {
+						if (gObjects[k]->testIntersection(shadowRay) > epsilon)
+						{
+							isShadow = true;
+							break;
+						}
+					}
+
+					if (!isShadow)
+					{
+						diffuse = diffuse + (lights[index]->intensity * kd * (max(0.0, (n.dotProduct(l)))));
+						Vec3 v = viewPos - hitPoint;
+						Vec3 h = (v + l).normalize();
+						specular = specular + (lights[index]->intensity * ks * pow(max(0.0, (n.dotProduct(h))), Phongexponent));
+					}
+
+				}
+				// FinalColor
+				Color ambient = gObjects[hitObjectIndex]->color * ka;
+				finalColor = ambient + diffuse + specular;
+
+				if (finalColor.red > 1.0 || finalColor.blue > 1.0 || finalColor.green > 1.0)
+				{
+
+					if (finalColor.red > 1.0)
+						finalColor.red = 1.0;
+
+					if (finalColor.blue > 1.0)
+						finalColor.blue = 1.0;
+
+					if (finalColor.green > 1.0)
+						finalColor.green = 1.0;
+				}
+
+			}
+
+			else {
+				Color backgroundColor(0.0f, 0.0f, 0.0f);
+				finalColor = backgroundColor;
+			}
+
+			idx = ((j * viewWidth) + i) * 4;
+			data[idx] = floor(finalColor.red * 255);
+			data[idx + 1] = floor(finalColor.green * 255);
+			data[idx + 2] = floor(finalColor.blue * 255);
+			data[idx + 3] = 255;
+		}
+	}
 }
-*/
 
 extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 
-	//#TODO: Uncomment this block when you have implementation for both types of camera
-	/*
-	OrthographicCamera orthoCam(viewPos, viewDir, viewUp);
+	//------------ Set camera frame ----------------------
 	orthoCam.setCameraFrame();
 	cout << orthoCam;
 
-	PerspectiveCamera perspectiveCam(viewPos, viewDir, viewUp);
 	perspectiveCam.setCameraFrame();
 	cout << perspectiveCam;
-	*/
-
 	
-	//----------- Light ------------------
-	//#TODO: Uncomment this block when you have implementation for Vec3
-	/* 
-	double ka = 0.2, kd = 0.6, ks = 0.2, Phongexponent = 32;
-	vector<Light*> lights;
-	Light light1(Vec3(0.0f, 5.0f, 0.0f), Color(1.0f));
+	
+	//----------- Add lights -----------------------------
 	lights.push_back(&light1);
-	Light light2(Vec3(5.0f, 5.0f, 0.0f), Color(1.0f));
 	lights.push_back(&light2);
-	*/
 
-	//----------- Result image ------------------
-	unsigned char* data = new unsigned char[viewWidth * viewHeight * 4];
-	
-	//------------ Object ----------------
-	//#TODO: Uncomment this block when you have implementation for geometric objects
-	/* 
-	vector<GeometricObject*> gObjects;
-	Sphere sphere1(Vec3(0.0f, 0.0f, -1.0f), 0.5f, Color(1.0f, 0.0f, 0.0f));
-	Plane plane1(0.0f, 1.0f, 0.0f, 1.4f, Color(0.5f, 0.5f, 0.5f));
-	Ellipsoid ellipsoid1(Vec3(3.25f, 0.0f, -2.0f), 1.5f, 1.0f, 0.75f, Color(0.0f, 1.0f, 0.0f));
-	Cone cone1(Vec3(0.25f, 0.1f, -0.25f), 0.25f, 0.5f, Color(0.0f, 0.0f, 1.0f));
-	Cylinder cylinder1(Vec3(-0.5f, 0.0f, 0.0f), 0.25f, 0.5f, Color(1.0f, 0.0f, 1.0f));
-
+	//----------- Add objects ----------------------------
 	gObjects.push_back(&plane1);
 	gObjects.push_back(&sphere1);
 	gObjects.push_back(&ellipsoid1);
+	/*gObjects.push_back(&cone1);
+	gObjects.push_back(&cylinder1);*/
 
-	*/
- 
-
-	//------------ Ray tracing ----------------
-	// #TODO: Uncomment this block when you have implementation for ray tracing
-	/*
-	char projMethod;
-	
+	//----------- Choose projection method ---------------
 	do {
 		cout << "Choose the projection method (O/P): (O = orthographic), (P = perspective):";
 		cin >> projMethod;	
 	} while (projMethod != 'P' && projMethod != 'p' && projMethod != 'O' && projMethod != 'o');
 	
-
-	if (projMethod == 'P' || projMethod == 'p')
-		rayTracingPerspective(perspectiveCam, lights, ka, kd, ks, Phongexponent, gObjects, data);
-	else if (projMethod == 'O' || projMethod == 'o')
-		rayTracingOrthographic(orthoCam, lights, ka, kd, ks, Phongexponent, gObjects, data);
-	*/
-	
-	//#TODO: This block is used for testing, comment it when you finish all implementations
-	int idx = 0;
-	for (int i = 0; i < viewWidth; i++)
-		for (int j = 0; j < viewHeight; j++)
-		{
-			idx = ((j * viewWidth) + i) * 4;
-			data[idx] = floor(0.0f * 255);
-			data[idx + 1] = floor(0.5f * 255);
-			data[idx + 2] = floor(1.0f * 255);
-			data[idx + 3] = 255;
-		}
-	// end of testing block
-
+	//----------- Draw windows and update scene ------------
 	if (window::Handle wHnd = window::create(viewWidth, viewHeight, "Hello CS248")) {
 		if ((device = webgpu::create(wHnd))) {
+
 			queue = wgpuDeviceGetQueue(device);
 			swapchain = webgpu::createSwapChain(device);
-			createPipelineAndBuffers(data, viewWidth, viewHeight);
+			createPipelineAndBuffers(img, viewWidth, viewHeight);
+
+			// bind the user interaction
+			window::mouseClicked(mouseClickHandler);
+			window::keyPressed(keyPressHandler);
 
 			window::show(wHnd);
 			window::loop(wHnd, redraw);
+
 
 #ifndef __EMSCRIPTEN__
 			wgpuBindGroupRelease(bindGroup);
@@ -542,6 +734,7 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 		window::destroy(wHnd);
 #endif
 	}
+
 
 	return 0;
 }

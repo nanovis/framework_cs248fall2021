@@ -5,17 +5,21 @@
 
 using namespace std;
 
-class OrthographicCamera : public Camera{
+class OrthographicCamera : public Camera {
 public:
 	Vec3 u, v, w;
 	using Camera::Camera;
-	
+
 	void setCameraFrame() {
-		// #TODO: Set up 3 basis vector for camera
+		w = direction.negate().normalize();
+		u = up.crossProduct(w).normalize();
+		v = w.crossProduct(u).normalize();
 	}
 
 	void getRay(Ray& outRay, double ui, double vj) {
-		// #TODO: Get view ray from camera to the pixel
+		//In an  view, pixels has the same direction but different origins
+		outRay.direction = w.negate().normalize();// should normalized
+		outRay.origin = position + (u * ui) + (v * vj);
 	}
 
 };

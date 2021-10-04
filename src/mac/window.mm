@@ -4,6 +4,12 @@
 
 #include "glue.h"
 
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3native.h>
+#include <stdio.h>
+GLFWwindow* _NULLABLE _window;
+
 /**
  * Default window width.
  */
@@ -15,14 +21,14 @@
  * Default window height.
  */
 #ifndef WINDOW_WIN_H
-#define WINDOW_WIN_H 450
+#define WINDOW_WIN_H 600
 #endif
 
 /**
  * Default window title.
  */
-#ifndef WINDOW_WIN_NAME
-#define WINDOW_WIN_NAME "Demo"
+#ifndef WINDOW_WIN_TITLE
+#define WINDOW_WIN_TITLE "CS248"
 #endif
 
 /**
@@ -236,30 +242,47 @@ AUTO_RELEASE_POOL_RELEASE;
 
 //******************************** Public API ********************************/
 
-window::Handle window::create(unsigned winW, unsigned winH, const char* name) {
-	WindowImpl* win = [[WindowImpl alloc]
-		initWithContentRect:NSMakeRect(0, 0, winW, winH)
-			styleMask:WINDOW_NS_WIN_FLAGS
-				backing:NSBackingStoreBuffered defer:NO];
-	[win center];
-	[win makeKeyAndOrderFront:win];
-	[win makeMainWindow];
-	return TO_HND(win);
+inline static void print_glfw_error(int code, const char* _NULLABLE desc)
+{
+	printf("GLFW [%d]: %s", code, desc);
 }
 
+window::Handle window::create(unsigned winW, unsigned winH, const char* title) {
+	glfwSetErrorCallback(print_glfw_error);
+	if (!glfwInit())
+		return NULLPTR;
+
+	// Make sure GLFW does not initialize any graphics context.
+	// This needs to be done explicitly later
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	_window = glfwCreateWindow((winW) ? winW : WINDOW_WIN_W, (winH) ? winH : WINDOW_WIN_H, (title) ? title : WINDOW_WIN_TITLE, NULL, NULL);
+	if (!_window)
+	{
+		glfwTerminate();
+		return NULLPTR;
+	}
+
+	WindowImpl* win = glfwGetCocoaWindow(_window);
+	return reinterpret_cast<window::Handle>(win);
+}
 void window::destroy(window::Handle wHnd) {
-	[TO_WIN(wHnd) close];
+	//[TO_WIN(wHnd) close];
+	glfwDestroyWindow(_window);
 }
 
-void window::show(window::Handle /*wHnd*/, bool /*show*/) {}
+void window::show(window::Handle /*wHnd*/, bool /*show*/) {
+	glfwShowWindow(_window);
+}
 
 void window::loop(window::Handle wHnd, window::Redraw func) {
 	/*
 	 * Starts with an initial call to the draw function (which, for example,
 	 * clears the screen early).
 	 */
-	if (func && func()) {
-		[TO_WIN(wHnd) setRedraw:func];
-		impl::wait();
+	while(!(glfwWindowShouldClose(_window)))
+	{
+		glfwPollEvents();
+		func();
 	}
 }

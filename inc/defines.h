@@ -84,3 +84,12 @@
 #define _NULLABLE 
 #endif
 #endif
+
+// =========================== RENDERER DEFINES =====================================
+#define MOUSE_LEFT_BUTTON 0
+#define MOUSE_RIGHT_BUTTON 1
+#define MOUSE_MIDDLE_BUTTON 2
+
+#define ACTION_RELEASED 0
+#define ACTION_PRESSED 1
+#define ACTION_REPEAT 2

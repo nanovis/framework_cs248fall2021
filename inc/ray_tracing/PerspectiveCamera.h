@@ -6,15 +6,19 @@ using namespace std;
 class PerspectiveCamera : public Camera {
 public:
 	Vec3 w, u, v;
-	double distance = 1.0f; 
+	double distance = 1.0f;
 	using Camera::Camera;
-	
+
 	void setCameraFrame() {
-		// #TODO: Set up 3 basis vector for camera
+		w = direction.negate().normalize();
+		u = up.crossProduct(w).normalize();
+		v = w.crossProduct(u).normalize();
 	}
 
 	void getRay(Ray& outRay, double ui, double vj) {
-		// #TODO: Get view ray from camera to the pixel
+		//In a perspective view, pixels has the same origin but different directions
+		outRay.direction = ((w.negate() * distance) + (u * ui) + (v * vj)).normalize();
+		outRay.origin = position;
 	}
 };
 

@@ -13,6 +13,13 @@
 #pragma comment(lib, "shcore.lib")
 #endif
 
+// ngan.nguyen: add GLFW
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include <stdio.h>
+GLFWwindow* _NULLABLE _window;
+// ngan.nguyen: end
 //****************************************************************************/
 
 /*
@@ -26,14 +33,14 @@
  * Default window height (in pixels at 96 DPI; scaled for other sizes).
  */
 #ifndef WINDOW_WIN_H
-#define WINDOW_WIN_H 450
+#define WINDOW_WIN_H 600
 #endif
 
 /*
  * Default window title.
  */
-#ifndef WINDOW_WIN_NAME
-#define WINDOW_WIN_NAME "Demo"
+#ifndef WINDOW_WIN_TITLE
+#define WINDOW_WIN_TITLE "CS248"
 #endif
 
 /*
@@ -440,98 +447,118 @@ bool yield() {
 
 //******************************** Public API ********************************/
 
-window::Handle window::create(unsigned winW, unsigned winH, const char* name) {
-	/*
-	 * Dynamically added polyfill available only in the Win10 Creators Update.
-	 * Workaround aside, it should really be done in the manifest:
-	 *
-	 * https://msdn.microsoft.com/en-us/library/windows/desktop/aa374191.aspx
-	 */
-	if (SetProcessDpiAwarenessContext != NULL) {
-		SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-	}
-	HWND window = NULL;
-	WNDCLASS wndClass;
-	wndClass.style         = CS_OWNDC;
-	wndClass.lpfnWndProc   = impl::windowEvents;
-	wndClass.cbClsExtra    = 0;
-	wndClass.cbWndExtra    = 0;
-	wndClass.hInstance     = GetModuleHandle(NULL);
-	wndClass.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-	wndClass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = NULL;
-	wndClass.lpszMenuName  = NULL;
-	wndClass.lpszClassName = TEXT("AppWin");
-	if (RegisterClass(&wndClass)) {
-		/*
-		 * On multi-monitor systems we're not guaranteed the correct DPI
-		 * without a window handle, so we create but don't show a window at
-		 * the default position, query its DPI, then destroy it.
-		 */
-		window = CreateWindow(
-			wndClass.lpszClassName, TEXT(name), 0,
-				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-					NULL, NULL, wndClass.hInstance, NULL);
-		UINT const dpi = impl::getWindowDpi(window);
-		if (window) {
-			DestroyWindow(window);
-		}
-		/*
-		 * Create the window, adjusted using the best DPI information we can
-		 * obtain (which depends on the OS version). Works with newer Win10
-		 * onwards, and tries to do the right thing on older versions.
-		 */
-	#if WINDOW_WIN_RESIZE
-		DWORD dwWndStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN  |  WS_OVERLAPPEDWINDOW;
-	#else
-		DWORD dwWndStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN  | (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME);
-	#endif
-		DWORD dwExtStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE |  WS_EX_ACCEPTFILES;
-		RECT rect;
-		rect.left   = 0;
-		rect.top    = 0;
-		rect.right  = MulDiv((winW) ? winW : WINDOW_WIN_W, dpi, USER_DEFAULT_SCREEN_DPI);
-		rect.bottom = MulDiv((winH) ? winH : WINDOW_WIN_H, dpi, USER_DEFAULT_SCREEN_DPI);
-		if (AdjustWindowRectExForDpi != NULL) {
-			AdjustWindowRectExForDpi(&rect, dwWndStyle, FALSE, dwExtStyle, dpi);
-		} else {
-			      AdjustWindowRectEx(&rect, dwWndStyle, FALSE, dwExtStyle);
-		}
-		winW = rect.right - rect.left;
-		winH = rect.bottom - rect.top;
-		window = CreateWindowEx(dwExtStyle,
-			wndClass.lpszClassName, TEXT(name),
-				dwWndStyle, CW_USEDEFAULT, CW_USEDEFAULT,
-					winW, winH, NULL, NULL, wndClass.hInstance, NULL);
-		if (window) {
-			/*
-			 * Accept dropped files (which requires user code to register for
-			 * drop events) and grab the print screen key (which is missing
-			 * from WM_KEYDOWN).
-			 */
-			DragAcceptFiles(window, FALSE);
-			RegisterHotKey (window, VK_SNAPSHOT, 0, VK_SNAPSHOT);
-			return TO_HND(window);
-		}
-		UnregisterClass(wndClass.lpszClassName, wndClass.hInstance);
-	}
-	return nullptr;
+
+inline static void print_glfw_error(int code, const char* _NULLABLE desc)
+{
+	printf("GLFW [%d]: %s", code, desc);
 }
 
-void window::destroy(window::Handle wHnd) {
-	DestroyWindow(TO_WIN(wHnd));
+window::Handle window::create(unsigned winW, unsigned winH, const char* title) {
+	glfwSetErrorCallback(print_glfw_error);
+	if (!glfwInit())
+		return NULLPTR;
+
+	// Make sure GLFW does not initialize any graphics context.
+	// This needs to be done explicitly later
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	_window = glfwCreateWindow((winW) ? winW : WINDOW_WIN_W, (winH) ? winH : WINDOW_WIN_H, (title) ? title : WINDOW_WIN_TITLE, NULL, NULL);
+	if (!_window)
+	{
+		glfwTerminate();
+		return NULLPTR;
+	}
+
+	HWND hwnd = glfwGetWin32Window(_window);
+	return reinterpret_cast<window::Handle>(hwnd);
 }
 
-void window::show(window::Handle wHnd, bool show) {
-	ShowWindow(TO_WIN(wHnd), (show) ? SW_SHOWDEFAULT : SW_HIDE);
+
+void window::destroy(window::Handle /*wHnd*/) {
+	//DestroyWindow(TO_WIN(wHnd));
+	glfwDestroyWindow(_window);
+}
+
+void window::show(window::Handle /*wHnd*/, bool show) {
+	/*ShowWindow(TO_WIN(wHnd), (show) ? SW_SHOWDEFAULT : SW_HIDE);*/
+	glfwShowWindow(_window);
 }
 
 void window::loop(window::Handle /*wHnd*/, window::Redraw func) {
-	while (impl::yield()) {
-		if (func) {
-			if (!func()) {
-				break;
-			}
-		}
+	while (!glfwWindowShouldClose(_window)) {
+		glfwPollEvents();
+		// render function callback
+		func();
 	}
+}
+
+/**
+ * Converts mouse button constants from GLFW3 library into our library constants.
+ */
+int window::convertMouseButton(int button)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		return MOUSE_LEFT_BUTTON;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		return MOUSE_MIDDLE_BUTTON;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		return MOUSE_RIGHT_BUTTON;
+	}
+
+	return -1;
+}
+
+/**
+ * Converts mouse action constants from GLFW3 library into our library constants.
+ */
+int window::convertMouseAction(int action)
+{
+	if (action == GLFW_PRESS) {
+		return ACTION_PRESSED;
+	}
+	else if (action == GLFW_RELEASE) {
+		return ACTION_RELEASED;
+	}
+	else if (action == GLFW_REPEAT) {
+		return ACTION_REPEAT;
+	}
+	
+	return -1;
+}
+
+/**
+ * Binds mouse click inside the GLFW3 window to the Renderer mouse click handler.
+ */
+void window::mouseClicked(MouseHandler func)
+{
+	mouseClickHandlerClb = func;
+
+	glfwSetMouseButtonCallback(_window, [](GLFWwindow* window, int button, int action, int mods) {
+		if (mouseClickHandlerClb != NULLPTR) {
+			double xpos, ypos;
+			//getting cursor position
+			glfwGetCursorPos(window, &xpos, &ypos);
+
+			mouseClickHandlerClb(convertMouseButton(button),
+				convertMouseAction(action),
+				(int)xpos,
+				(int)ypos);
+		}
+	});
+}
+
+/**
+ * Binds key press inside the GLFW3 window to the Renderer key press handler.
+ */
+void window::keyPressed(KeyHandler func)
+{
+	keyHandlerClb = func;
+
+	glfwSetKeyCallback(_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+		if (keyHandlerClb != NULLPTR) {
+			keyHandlerClb(key, convertMouseAction(action));
+		}
+	});
 }

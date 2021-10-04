@@ -33,6 +33,8 @@
 #pragma comment(lib, "vulkan-1.lib")
 #endif
 
+
+
 namespace impl {
 /*
  * NOTE: keeping these here for a single device/window until I work out more.
