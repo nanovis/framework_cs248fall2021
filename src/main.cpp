@@ -700,6 +700,9 @@ extern "C" int __main__(int /*argc*/, char* /*argv*/[]) {
 		cout << "Choose the projection method (O/P): (O = orthographic), (P = perspective):";
 		cin >> projMethod;	
 	} while (projMethod != 'P' && projMethod != 'p' && projMethod != 'O' && projMethod != 'o');
+
+	//#TODO: Print your guide to use keyboard and mouse for interaction:
+	// For example: WSAD for move selected object, etc.
 	
 	//----------- Draw windows and update scene ------------
 	if (window::Handle wHnd = window::create(viewWidth, viewHeight, "Hello CS248")) {

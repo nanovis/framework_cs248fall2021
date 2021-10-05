@@ -94,18 +94,17 @@ public:
 
 	static Matrix4 Rotation(Vec3 theta)
 	{
-		// #TODO: Implement function to calculate rotation matrix for three axis
+		// #TODO: Implement function to calculate rotation matrix for three axes
 		// theta.x - rotate angle around X axis
 		// theta.y - rotate angle around Y axis
 		// theta.z - rotate angle around Z axis
 	}
 	static Matrix4 RotationInv(Vec3 theta)
 	{
-		// #TODO: Implement function to calculate inverse of rotation matrix for three axis
+		// #TODO: Implement function to calculate inverse of rotation matrix for three axes
 		// theta.x - rotate angle around X axis
 		// theta.y - rotate angle around Y axis
 		// theta.z - rotate angle around Z axis
-
 	}
 };
 

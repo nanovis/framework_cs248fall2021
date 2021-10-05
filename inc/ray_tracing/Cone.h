@@ -8,7 +8,7 @@
 #include<iostream>
 
 using namespace std;
-	
+
 class Cone : public GeometricObject {
 public:
 	double radius;
@@ -19,7 +19,7 @@ public:
 
 	Cone(Vec3 _apex, double _radius, double _height, Color _color) : GeometricObject(_color), apex(_apex), radius(_radius), height(_height)
 	{
-		
+
 	}
 
 	double testIntersection(Ray ray)
@@ -37,4 +37,3 @@ public:
 		// #TODO: Implement function to find normal vector at intesection point, return normal vector
 	}
 };
-
