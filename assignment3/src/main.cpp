@@ -52,8 +52,8 @@ Matrix4 teapotModel;
 Matrix4 normalTeapot;
 
 //----------- Camera -----------------------------------------------
-Vec3 eye_postion(4.0f, 3.0f, 3.0f);
-Vec3 gaze_direction(-4.0f, -3.0f, -3.0f);
+Vec3 eye_postion(0.0f, 0.0f, 5.0f);
+Vec3 gaze_direction(0.0f, 0.0f, -1.0f);
 Vec3 view_up(0.0f, 1.0f, 0.0f);
 Camera camera(eye_postion, gaze_direction, view_up);
 
