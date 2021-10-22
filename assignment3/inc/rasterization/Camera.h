@@ -47,6 +47,11 @@ public:
 		return m_per;
 	}
 
+	// #TODO: Compute perspective projection matrix for Projection transformation using left, right, bottom, top: M_per
+	Matrix4 calculatePerspectiveMatrix(double l, double r, double b, double t, double n, double f) {
+		Matrix4 m_per;
+		return m_per;
+	}
 };
 
 

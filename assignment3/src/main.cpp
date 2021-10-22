@@ -20,6 +20,9 @@ const int viewWidth = 1024, viewHeight = 768;
 const double viewLeft = -2.0f, viewRight = 2.0f, viewBottom = -1.5f, viewTop = 1.5f;
 const double aspect = (double)viewWidth / (double)viewHeight;
 const double FoV = 45.f;
+
+// #NOTE: If you compute the perspective projection matrix by using viewLeft, viewRight, viewBottom, viewTop,
+// you have to find the value of nearPlane to make sure the FoV is 45.f and change the nearPlane in here
 const double nearPlane = -1.0f, farPlane = -1000.0f;
 const double INF = std::numeric_limits<double>::infinity();
 
