@@ -55,7 +55,7 @@ Matrix4 teapotModel;
 Matrix4 normalTeapot;
 
 //----------- Camera -----------------------------------------------
-Vec3 eye_postion(0.0f, 0.0f, 5.0f);
+Vec3 eye_postion(0.0f, 0.0f, 1.0f);
 Vec3 gaze_direction(0.0f, 0.0f, -1.0f);
 Vec3 view_up(0.0f, 1.0f, 0.0f);
 Camera camera(eye_postion, gaze_direction, view_up);
@@ -108,6 +108,8 @@ Color shade(Vec3 pos, Vec3 normal, Camera cam, Light light, Material m) {
 // #TODO: Implement rasterization
 void rasterization(Mesh object, Matrix4 objectModel, Matrix4 normalMatrix) {
 }
+
+// #TODO: Define function for wireframe model rendering with a hidden surface removal
 
 //----------- WEBGPU variables ---------------------------------------
 
@@ -418,8 +420,8 @@ static bool redraw() {
 	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, nullptr);			// create encoder
 	WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPass);	// create pass
 
-	// #NOTE: You can add updates for the scene in here
-	rasterization(teapot, teapotModel, normalTeapot);
+	// #NOTE: You can add updates for the scene in here (also wireframe model rendering)
+	rasterization(beacon, beaconModel, normalBeacon);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	wgpuQueueWriteTexture(queue, &texCopy, img, viewWidth * viewHeight * 4, &texDataLayout, &texSize);	
 	
